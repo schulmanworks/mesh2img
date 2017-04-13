@@ -13,7 +13,7 @@ script on the command line as-is. I've tried to comment this script to be easy t
 :copyright: 2016 by Phillip Stromberg
 :license:   MIT
 
-working command: blender -b -P mesh2img.py -- --paths test1.stl --dimensions 200 -i jpg -m Blue -v
+working command: blender -b -P mesh2img.py -- --paths test1.stl --dimensions 250,350 -i jpg -m Blue -v
 """
 
 from bpy import context, data, ops
