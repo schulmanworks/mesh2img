@@ -13,6 +13,7 @@ script on the command line as-is. I've tried to comment this script to be easy t
 :copyright: 2016 by Phillip Stromberg
 :license:   MIT
 
+working command: blender -b -P mesh2img.py -- --paths test1.stl --dimensions 200 -i jpg -m Blue -v
 """
 
 from bpy import context, data, ops
@@ -79,9 +80,13 @@ class Mesh2Img(object):
             if isinstance(paths, str):  # if they gave us just 1 path instead of a list of paths
                 paths = [paths]
         else:
-            paths = []
+            paths = [self.makerMaterial()]
         self.filepaths = paths
-        self.materials = [mat_name.strip() for mat_name in material.split(',')]
+        if material is not None:
+            self.materials = [mat_name.strip() for mat_name in material.split(',')]
+        else:
+            self.materials = ["Blue"]    
+            
         self._job_templates = []
         self.verbose = self._verbose = bool(verbose)
         self.max_dim = max_dim
@@ -96,6 +101,7 @@ class Mesh2Img(object):
     @property
     def verbose(self):
         return self._verbose
+        
 
     @verbose.setter
     def verbose(self, value):
@@ -204,13 +210,25 @@ class Mesh2Img(object):
         :param material_name: the name or names of materials you want applied to the object (in order of application).
                               This can be a string of a single material name or a collection of names.
         """
+        def makeMaterial(name, diffuse, specular, alpha):
+            mat = data.materials.new(name)
+            mat.diffuse_color = diffuse
+            mat.diffuse_shader = 'LAMBERT' 
+            mat.diffuse_intensity = 1.0 
+            mat.specular_color = specular
+            mat.specular_shader = 'COOKTORR'
+            mat.specular_intensity = 0.5
+            mat.alpha = alpha
+            mat.ambient = 1
+            return mat
         if isinstance(material_names, str):
             material_names = [material_names]
+            
         materials = []
         for material_name in material_names:
             try:
-                material = data.materials[material_name]
-                materials.append(material)
+                # material = data.materials[material_name]
+                materials.append(makeMaterial(material_name, (0,0,1), (0.5,0.5,0), 0.5))
             except KeyError:
                 raise ValueError("The material name '%s' was not found.", material_name)
         # all the materials were successfully found so now we will claer the object's existing material
@@ -402,6 +420,8 @@ class JobTemplate(object):
         filepath, src_ext = os.path.splitext(input_filepath)
         basename = os.path.basename(filepath)
         ext = self.image_format.lower()
+        p = self.output_template.format(basename=basename, date=date, exec_time=exec_time, ext=ext,
+                                           filepath=filepath, height=self.height, src_ext=src_ext, width=self.width)
         return self.output_template.format(basename=basename, date=date, exec_time=exec_time, ext=ext,
                                            filepath=filepath, height=self.height, src_ext=src_ext, width=self.width)
 
